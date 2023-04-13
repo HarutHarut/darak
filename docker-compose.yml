@@ -10,7 +10,7 @@ services:
     hostname: luglockers.loc
     domainname: loc
     container_name: luglockers-apache
-    ports:
+    ports:dispatch
       - 85:80
     volumes:
       - ./:/var/www/luglockers

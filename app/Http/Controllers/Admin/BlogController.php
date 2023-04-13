@@ -48,12 +48,19 @@ class BlogController extends ApiController
 
         try {
             DB::beginTransaction();
+            $meta = array('en' => null, 'ru' => null, 'ch' => null, 'am' => null, 'fr' => null);
+            $data['meta_title'] = $data['meta_title'] ?? $meta;
+            $data['meta_description' ]= $data['meta_description'] ?? $meta;
+            $data['meta_keywords'] = $data['meta_keywords'] ?? $meta;
 
             $blog = Blog::query()
                 ->create([
                     "title" => $data['title'],
                     "slug" => $this->blogService->getSetSlug($data['title']['en']),
                     "desc" => $data['desc'],
+                    "meta_title" => $data['meta_title'],
+                    "meta_description" => $data['meta_description'],
+                    "meta_keywords" => $data['meta_keywords'],
                 ]);
 
             if ($request->file('logo')) {

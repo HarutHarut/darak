@@ -24,16 +24,36 @@ class City extends Model
 {
     use HasFactory;
 
+    protected $casts = [
+        'about_city' => 'array',
+        'description' => 'array',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
+        'meta_keywords' => 'array',
+    ];
+
     protected $fillable = [
         'name',
+        'slug',
         'lat',
         'lng',
         'top',
-        'logo'
+        'logo',
+        'preview',
+        'about_city',
+        'description',
+        'meta_title',
+        'meta_description',
+        'meta_keywords',
     ];
 
     public function media(): MorphMany
     {
         return $this->morphMany(Media::class, 'related');
+    }
+
+    public function branches()
+    {
+        return $this->hasMany(Branch::class, 'city_id');
     }
 }

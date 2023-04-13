@@ -27,7 +27,9 @@ class LockerController extends ApiController
 
     protected $imageService;
     protected $branchService;
-    public function __construct(ImageService $imageService, BranchService $branchService) {
+
+    public function __construct(ImageService $imageService, BranchService $branchService)
+    {
         $this->imageService = $imageService;
         $this->branchService = $branchService;
     }
@@ -60,7 +62,7 @@ class LockerController extends ApiController
             DB::beginTransaction();
 
             $check_locker = Locker::query()->where('branch_id', $data['branch_id'])->where('size_id', $data['size_id'])->get();
-            if(!count($check_locker)) {
+            if (!count($check_locker)) {
                 $locker = Locker::query()->create([
                     'branch_id' => $data['branch_id'],
                     'size_id' => $data['size_id'],
@@ -73,7 +75,7 @@ class LockerController extends ApiController
                     $locker->prices()->createMany($data['prices']);
                 }
             } else {
-                return $this->error(400, __('general.locker.add.repeatSize'));
+                return $this->error(400, '', ['error' => __('general.locker.add.repeatSize')]);
             }
 
             DB::commit();
@@ -101,12 +103,15 @@ class LockerController extends ApiController
                 throw new Exception('Locker not found.', 404);
             }
 
-            $locker->update($data);
+            $locker->update([
+                'size_id' => $data['size_id'],
+                'price_per_day' => $data['price_per_day'],
+                'price_per_hour' => $data['price_per_hour'],
+                'count' => $data['count'],
+            ]);
+            $locker->prices()->delete();
             if (count($data['prices']) && $data['prices'][0]['price'] !== null && $data['prices'][0]['range_end'] !== null && $data['prices'][0]['range_start'] !== null) {
-                $locker->prices()->delete();
                 $locker->prices()->createMany($data['prices']);
-            }else{
-                $locker->prices()->delete();
             }
             DB::commit();
 
@@ -125,7 +130,7 @@ class LockerController extends ApiController
         try {
 
             $locker = Locker::query()
-                ->with(['prices','size'])
+                ->with(['prices', 'size'])
                 ->find($id);
             $locker['currency'] = $locker->branch->business->currency ?? 'EUR';
 
@@ -136,20 +141,22 @@ class LockerController extends ApiController
         }
     }
 
-    public function lockersMap(Request $request): JsonResponse {
+    public function lockersMap(Request $request): JsonResponse
+    {
         $data = $request->all();
         return response()->json($data);
     }
 
-    public function updateGraph(Request $request) {
+    public function updateGraph(Request $request)
+    {
         $data = $request->all();
         foreach ($data['selected'] as $cube) {
 
-            $start = explode( '/', $cube['value']);
+            $start = explode('/', $cube['value']);
             if (isset($cube['type'])) {
                 SpecialClosingTime::query()
                     ->where('locker_id', $cube['lockerId'])
-                    ->where('start',$start[1])
+                    ->where('start', $start[1])
                     ->delete();
             } else {
                 SpecialClosingTime::create([
@@ -171,11 +178,12 @@ class LockerController extends ApiController
      * @param Request $request
      * @return JsonResponse
      */
-   public function closeDaysWithDateRange(Request $request) {
+    public function closeDaysWithDateRange(Request $request)
+    {
         $data = $request->all();
         $start = strtotime($data['dateRange']['startDate']);
-        $end =  strtotime($data['dateRange']['endDate']);
-        for( $j = 0 ; $j < count($data['selectedLocker']); $j++) {
+        $end = strtotime($data['dateRange']['endDate']);
+        for ($j = 0; $j < count($data['selectedLocker']); $j++) {
             if ($data['chosenAction'] == 'close') {
                 for ($i = $start; $i < $end; $i = $i + 3600) {
                     $date = Carbon::parse($i)->format('Y-m-d');
@@ -200,11 +208,31 @@ class LockerController extends ApiController
                 }
             }
         }
-       $user = Auth::user();
-       $business = Business::query()->where('user_id', $user->id)->first();
-       $branchId = $this->branchService->getBranchId($data, $business->id);
-       $openingTime = $this->branchService->getOpenHour($branchId, $data);
-       return response()->json($openingTime);
+        $user = Auth::user();
+        $business = Business::query()->where('user_id', $user->id)->first();
+        $branchId = $this->branchService->getBranchId($data, $business->id);
+        $openingTime = $this->branchService->getOpenHour($branchId, $data);
+        return response()->json($openingTime);
 
-   }
+    }
+
+    public function removeLocker(Request $request)
+    {
+        $data = $request->all();
+        $locker = Locker::find($data['locker_id']);
+
+        if (count($locker->bookings)) {
+            return response()->json('false', 422);
+        } else {
+            if (count($locker->prices)) {
+                foreach ($locker->prices as $item) {
+                    $item->delete();
+                }
+            }
+            $locker->delete();
+            return response()->json('delete');
+        }
+
+
+    }
 }

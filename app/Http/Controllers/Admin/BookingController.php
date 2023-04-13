@@ -20,6 +20,7 @@ class BookingController extends ApiController
         try {
             $bookings = Booking::query()
                 ->with(['branch.business','locker'])
+                ->orderByDesc('created_at')
                 ->paginate(config('constants.pagination.perPage'));
 
             return $this->success(200, ['bookings' => $bookings]);

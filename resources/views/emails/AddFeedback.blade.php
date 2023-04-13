@@ -41,9 +41,8 @@
         <img src="{{ config('app.beck_url') . '/img/logo-square.jpg' }}" style="max-width: 85px; width: 100%; margin-right: 20px;">
         <p style="color: #0070c0; font-weight: 600; font-size: 50px; margin: 0px;">LugLockers<span style="color: #ff0000;">.com</span></p>
     </div>
-    <h2 style="color: #000000; margin-bottom: 0px; margin-top: 30px; font-style: italic;">{{ __('general.emails.AddFeedback.subjectLeave') }}!</h2>
-    <h2 style="color: #000000; margin-bottom: 0px; margin-top: 30px; font-style: italic;">{{ __('general.emails.dear') . ' ' . $branch->name['en'] }},</h2>
-    <p>{{ __('general.emails.AddFeedback.youBookedAndStored') }}.</p>
+    <h2 style="color: #000000; margin-bottom: 0px; margin-top: 30px; font-style: italic;">{{ __('general.emails.dear') . ' ' . $order->user->name }},</h2>
+    <p>{{ __('general.emails.AddFeedback.youBookedAndStored', ['branchName' => $branch->name['en']]) }}.</p>
     <h4 style="color: #555; font-weight: 600; margin-bottom: 10px; font-size: 18px;">{{ __('general.emails.bookingNumber') }}--{{ $order->booking_number }}</h4>
     <table style="width: 100%;">
         <thead>
@@ -68,7 +67,7 @@
 
             @foreach($sizeArr as $item)
                 <tr class="sm-space">
-                    <td>{{ $item->name['en'] }}</td>
+                    <td>{{ $item->locker->size->name['en'] }}</td>
                     <td>{{ $item->count }}</td>
                 </tr>
             @endforeach
@@ -83,7 +82,9 @@
             </tr>
             <tr>
                 <td>{{ __('general.emails.Address') }}.</td>
-                <td>{{ $branch->address }} <a href="{{ 'https://www.google.ru/maps/@' . $branch->lat . ',' . $branch->lng . ',10z' }}" style="display: block; color: #40c4f4; text-decoration: none; margin-top: 4px;">{{ __('general.emails.googleMaps') }}</a></td>
+                <td>{{ $branch->address }}
+{{--                    <a href="{{ 'https://www.google.ru/maps/@' . $branch->lat . ',' . $branch->lng . ',10z' }}" style="display: block; color: #40c4f4; text-decoration: none; margin-top: 4px;">{{ __('general.emails.googleMaps') }}</a>--}}
+                </td>
             </tr>
             <tr>
                 <td>{{ __('general.emails.email') }}.</td>

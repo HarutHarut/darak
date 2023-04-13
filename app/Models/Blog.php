@@ -30,6 +30,9 @@ class Blog extends Model
     protected $casts = [
         'title' => 'array',
         'desc' => 'array',
+        'meta_title' => 'array',
+        'meta_description' => 'array',
+        'meta_keywords' => 'array',
     ];
 
     /**
@@ -43,6 +46,9 @@ class Blog extends Model
         'title',
         'desc',
         'slug',
+        'meta_title',
+        'meta_description',
+        'meta_keywords'
     ];
 
     /**

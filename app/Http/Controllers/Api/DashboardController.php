@@ -106,7 +106,7 @@ class DashboardController extends Controller
 
 
 
-        $invoices = $invoices->get();
+        $invoices = $invoices->orderBy('created_at', 'desc')->get();
 
         return response()->json($invoices);
     }

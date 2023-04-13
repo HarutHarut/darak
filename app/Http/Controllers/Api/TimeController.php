@@ -51,7 +51,7 @@ class TimeController extends ApiController
                         'branch_id' => $data['branch_id'],
                         'weekday' => $value['weekday'],
                         'start' => $value['start'],
-                        'end' => $value['end'],
+                        'end' => $value['end'] == '24:00:00' ? '23:59:00' : $value['end'],
                         'status' => $value['status'],
                     ]);
 
@@ -88,12 +88,13 @@ class TimeController extends ApiController
                 if($value['status'] == true && Carbon::parse($value['end']) <= Carbon::parse($value['start'])){
                     return $this->error(422, __("general.endAfterStart"));
                 }
+//                return response()->json($value['end']);
                 OpeningTime::query()
                     ->where('id','=',$value['id'])
                     ->update([
                         'status' => $value['status'],
                         'start' => $value['start'],
-                        'end' => $value['end'],
+                        'end' => $value['end'] == '24:00:00' ? '23:59:00' : $value['end'],
                     ]);
             }
             $openingTimes = OpeningTime::query()

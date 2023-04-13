@@ -51,7 +51,9 @@
         </tr>
         <tr>
             <td>{{ __('general.emails.Address') }}.</td>
-            <td>{{ $business->address }} <a href="{{ 'https://www.google.ru/maps/@' . $business->lat . ',' . $business->lng . ',10z' }}" style="display: block; color: #40c4f4; text-decoration: none; margin-top: 4px;">{{ __('general.emails.googleMaps') }}</a></td>
+            <td>{{ $business->address }}
+{{--                <a href="{{ 'https://www.google.ru/maps/@' . $business->lat . ',' . $business->lng . ',10z' }}" style="display: block; color: #40c4f4; text-decoration: none; margin-top: 4px;">{{ __('general.emails.googleMaps') }}</a>--}}
+            </td>
         </tr>
         <tr>
             <td>{{ __('general.emails.email') }}.</td>

@@ -14,4 +14,6 @@ use Illuminate\Support\Facades\Route;
 */
 
 Route::get('payment-callback', [\App\Http\Controllers\PaymentController::class, 'paymentCallback'])->name('payment.callback');
-
+Route::get('/sitemap/branches.xml', [\App\Http\Controllers\SitemapController::class, 'branches']);
+Route::get('/sitemap/cities.xml', [\App\Http\Controllers\SitemapController::class, 'cities']);
+Route::get('/sitemap/blog.xml', [\App\Http\Controllers\SitemapController::class, 'blog']);

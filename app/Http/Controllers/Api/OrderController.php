@@ -4,8 +4,6 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\ChangeBusinessStatus;
-use App\Jobs\BusinessBlockedJob;
-use App\Jobs\UserBlockedJob;
 use App\Luglocker\Email\EmailCreator;
 use App\Models\Booking;
 use App\Models\Branch;
@@ -30,14 +28,20 @@ class OrderController extends ApiController
         $user = $request->user();
         $user_currency = $user->currency ?? "EUR";
         $data = $request->all();
+        if (!isset($data['check_in'])) {
+            $data['check_in'] = date('Y-m-01');
+        } else {
+            $data['check_in'] = date('Y-m-d', strtotime($data['check_in']));
+        } if(!isset($data['check_out'])) {
+            $data['check_out'] = date('Y-m-t');
+        } else {
+            $data['check_out'] = date('Y-m-d', strtotime($data['check_out']));
+        }
         $orders = Order::with('bookings.branch', 'business', 'user', 'feedback');
-
         try {
-            if (isset($data['check_in']) && isset($data['check_out'])) {
-                $orders = $orders
-                    ->where('check_in', '>=', $data['check_in'])
-                    ->where('check_out', '<=', $data['check_out']);
-            }
+            $orders = $orders
+                ->where('check_in', '>=', $data['check_in'])
+                ->where('check_out', '<=', $data['check_out']);
 
             if (isset($data['status'])) {
                 if($data['status'] !== 'all'){
@@ -49,26 +53,31 @@ class OrderController extends ApiController
                 if (isset($data['user_id'])) {
                     $orders = $orders->where('user_id', $data['user_id']);
                 }
-                if (isset($data['business_id'])) {
-                    $orders = $orders->where('business_id', $data['business_id']);
+                if(isset($data['account']) && $data['account']){
+                    $orders = $orders->where('user_id', $user->id);
                 }
-
                 if (isset($data['branch_id'])) {
-
                     $orders = $orders->whereHas('bookings', function ($q) use ($data) {
                         $q->where('branch_id', $data['branch_id']);
                     });
                 }
-//            } elseif ($user->role['name'] == 'business_owner' && $data['type'] == 'business_owner')
-            } elseif ($user->role['name'] == 'business_owner')
+            }
+            elseif ($user->role['name'] == 'business_owner')
             {
-                $orders = $orders->where('business_id', $user->business['id']);
+                if(isset($data['account']) && $data['account']){
+                    $orders = $orders->where('user_id', $user->id);
+
+                }else{
+                    $orders = $orders->where('business_id', $user->business['id']);
+                }
+
                 if (isset($data['branch_id'])) {
                     $orders = $orders->whereHas('bookings', function ($q) use ($data) {
                         $q->where('branch_id', $data['branch_id']);
                     });
                 }
-            } elseif ($user->role['name'] == 'user' || ($user->role['name'] == 'business_owner' && (!isset($data['type']) || $data['type'] !== 'business'))) {
+            }
+            elseif ($user->role['name'] == 'user' || ($user->role['name'] == 'business_owner' && (!isset($data['type']) || $data['type'] !== 'business_owner'))) {
                 $orders = $orders->where('user_id', $user->id);
             }
 
@@ -78,7 +87,6 @@ class OrderController extends ApiController
             foreach ($orders as $order){
                 $order['priceCurrency'] = $this->currencyChangeFromUser($order->price, $order->currency, $user_currency, false) . ' ' . $user_currency;
             }
-//return response()->json($orders);
 
             $currency_courses = Settings::query()->where('key', 'currency')->first();
 

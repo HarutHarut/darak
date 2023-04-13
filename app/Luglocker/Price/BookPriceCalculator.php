@@ -19,6 +19,7 @@ trait BookPriceCalculator
         "package" => []
     ];
 
+    private $itemCount = 1;
     /**
      * @param $price
      * @param $business_currency
@@ -27,9 +28,9 @@ trait BookPriceCalculator
      * @param bool $format
      * @return float|int|string
      */
-    public function currencyChangeFromUser($price, $business_currency, $user_currency = "EUR", $admin_currency = "AMD", $format = true)
+    public static function currencyChangeFromUser($price, $business_currency, $user_currency = "EUR", $admin_currency = "AMD", $format = true)
     {
-        $price = (int)$price;
+        $price = (float)$price;
         $currencyArr = [];
         $currency_get = Settings::query()->where('key', 'currency')->first();
         $currency_change = json_decode($currency_get->value);
@@ -63,8 +64,9 @@ trait BookPriceCalculator
      * @param string $end
      * @return array
      */
-    public function calculatePrice(Locker $locker, string $start, string $end): array
+    public function calculatePrice(Locker $locker, string $start, string $end, int $count = 1): array
     {
+        $this->itemCount = $count;
         $diff = strtotime($end) - strtotime($start);
         $hours = ceil($diff / 3600);
         $lockerArray = $locker->toArray();
@@ -197,7 +199,7 @@ trait BookPriceCalculator
      */
     private function amountPerHour(float $price, int $hours): void
     {
-        $amount = round($hours * $price, 2);
+        $amount = round($hours * $price * $this->itemCount, 2);
 
         $this->calculatedPrice['total'] = $this->calculatedPrice['total'] + $amount;
         $this->calculatedPrice['per_hours'] = $this->calculatedPrice['per_hours'] + $amount;
@@ -210,7 +212,7 @@ trait BookPriceCalculator
      */
     private function amountPerDay(float $price, int $days): void
     {
-        $amount = round($days * $price, 2);
+        $amount = round($days * $price * $this->itemCount, 2);
 
         $this->calculatedPrice['total'] = $this->calculatedPrice['total'] + $amount;
         $this->calculatedPrice['per_days'] = $this->calculatedPrice['per_days'] + $amount;
@@ -225,15 +227,17 @@ trait BookPriceCalculator
     private function amountRange(array $price, int $hours): bool
     {
 //        ATTENTION:: REMOVED AFTER month testing
-//        foreach ($this->calculatedPrice['package'] as $key => $package) {
-//            if ($package['id'] === $price['id']) {
-//                $this->calculatedPrice['package'][$key]['count']++;
-//                return false;
-//            }
-//        }
+       foreach ($this->calculatedPrice['package'] as $key => $package) {
+           if ($package['id'] === $price['id']) {
+               $this->calculatedPrice['package'][$key]['count']++;
+               $this->calculatedPrice['total'] = $this->calculatedPrice['total'] + $price['price'];
+
+               return false;
+           }
+       }
         // ********************************************************************
-        $package = array_merge($price, ['count' => 1]);
-        $this->calculatedPrice['total'] = $this->calculatedPrice['total'] + $price['price'];
+        $package = array_merge($price, ['count' => $this->itemCount]);
+        $this->calculatedPrice['total'] = $this->calculatedPrice['total'] + $price['price'] * $this->itemCount;
 
         array_push($this->calculatedPrice['package'], $package);
         return true;

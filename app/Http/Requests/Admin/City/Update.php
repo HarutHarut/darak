@@ -26,7 +26,19 @@ class Update extends FormRequest
     public function rules(): array
     {
         return [
-            'logo' => ['image']
+            'image' => ['nullable'],
+            'preview' => ['nullable'],
+            'description.en' => ['required', 'string'],
+            'description.ru' => ['nullable', 'string'],
+            'description.ch' => ['nullable', 'string'],
+            'description.am' => ['nullable', 'string'],
+            'description.fr' => ['nullable', 'string'],
+
+            'about_city.en' => ['required', 'string'],
+            'about_city.ru' => ['nullable', 'string'],
+            'about_city.ch' => ['nullable', 'string'],
+            'about_city.am' => ['nullable', 'string'],
+            'about_city.fr' => ['nullable', 'string'],
         ];
     }
 }

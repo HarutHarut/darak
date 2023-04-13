@@ -93,7 +93,9 @@ class BranchRepository
                 });
         })->whereHas('business', function ($query) use ($user_id) {
             $query->where('user_id', '=', $user_id);
-        })->paginate(config('constants.pagination.perPage'));
+        })
+            ->where('status', $data['verify'])
+            ->paginate(config('constants.pagination.perPage'));
     }
 
     /**
@@ -118,6 +120,11 @@ class BranchRepository
                     });
             });
         }
+
+        if (isset($data['verify'])) {
+            $response->where('status', $data['verify']);
+        }
+
         return $response->paginate(config('constants.pagination.perPage'));
     }
 
@@ -177,6 +184,6 @@ class BranchRepository
             $response = $response->orderByDesc('avg_rating');
         }
 
-        return $response->get();
+        return $response->orderByDesc('is_bookable')->get();
     }
 }

@@ -61,32 +61,43 @@ class BranchController extends ApiController
         $data = $request->all();
         $user_business = Business::query()->where('user_id', $user->id)->exists();
 
-        $data['business_id'] = [];
+        $business_id = $data['business_id'] ?? null;
         if ($user->isBusiness() && $user_business) {
+            $business_id = $user->business->id;
             $data['business_id'] = $user->business->id;
         }
         try {
-            $branches = Branch::query();
-            if (!$user->isAdmin() || $request->has('business_id')) {
-                $branches = $branches->where('business_id', $data['business_id']);
-            }
-
-            $branches = $branches->with(['city', 'currency', 'business'])
+            $branches = Branch::query()->with(['city', 'currency', 'business'])
                 ->withCount(['lockers', 'feedbacks']);
-//                ->where('status', '=', config('constants.branch_status.verified'))
-//                ->where('working_status', '=', config('constants.branch_open_status.open'));
 
-            if (isset($data['search']) && $data['search'] != null) {
-                $branches = $branches->where('name', 'like', '%' . $data['search'] . '%')
-                    ->orWhere('address', 'like', '%' . $data['search'] . '%')
-                    ->orWhere('slug', 'like', '%' . $data['search'] . '%')
-                    ->orWhereHas('city', function ($q) use ($data) {
-                        $q->where('name', 'like', '%' . $data['search'] . '%');
+            if ($user->isBusiness()) {
+                $branches = $branches->where(function ($q) use ($user){
+                    $q->whereHas('business', function ($query) use ($user) {
+                        $query->where('user_id', $user->id);
                     });
+                });
+            } else {
+                if (isset($business_id) && $business_id !== null) {
+                    $branches = $branches->where('business_id', $business_id);
+                }
+
+            }
+            if (isset($data['search']) && $data['search'] != null) {
+                $branches = $branches->where(function ($q) use($data) {
+                    $q->where('name', 'like', '%' . $data['search'] . '%')
+                        ->orWhere('address', 'like', '%' . $data['search'] . '%')
+                        ->orWhere('slug', 'like', '%' . $data['search'] . '%')
+                        ->orWhereHas('city', function ($q) use ($data) {
+                            $q->where('name', 'like', '%' . $data['search'] . '%');
+                        });
+                });
             }
 
-            $branches = $branches->paginate(config('constants.pagination.perPage'));
+            if(isset($data['verify']) && $data['verify'] !== null){
+                $branches = $branches->where('status', '=', $data['verify']);
+            }
 
+            $branches = $branches->orderByDesc('created_at')->paginate(config('constants.pagination.perPage'));
             return $this->success(200, ['branches' => $branches]);
 
         } catch (\Throwable $e) {
@@ -127,6 +138,10 @@ class BranchController extends ApiController
             $data['check_out'] = $data['check_out'] . ' ' . $data['end_time']; //1651227300  1651230000
             $startWeekDay = date("w", strtotime($data['check_in']));
             $endWeekDay = date("w", strtotime($data['check_out']));
+            if (!$startWeekDay)
+                $startWeekDay = 7;
+            if (!$endWeekDay)
+                $endWeekDay = 7;
 
 
             foreach ($data['data'] as $item) {
@@ -200,8 +215,8 @@ class BranchController extends ApiController
                     }
 
                     if ($locker['count'] - $booking >= $item['count']) {
-                        $locker_arr = $this->calculatePrice($locker, $data['check_in'], $data['check_out']);
-                        $total += $locker_arr['total'] * $item['count'];
+                        $locker_arr = $this->calculatePrice($locker, $data['check_in'], $data['check_out'], $item['count']);
+                        $total = $locker_arr['total'];// * $item['count'];
                     } else {
                         return $this->error(400, __('general.lockerQuantityDoesNoteMatch'));
                     }
@@ -210,8 +225,6 @@ class BranchController extends ApiController
 
             $branch = Branch::find($data['branch_id']);
             $business_currency = $branch->business['currency'] ?? 'EUR';
-//            $branch_currency = $branch->currency['name'] ?? 'EUR';
-//            $user_currency = $user->currency ?? ($data['currency'] ?? 'EUR');
 
             $total_price = $this->currencyChangeFromUser($total, $business_currency, $user_currency, false) . ' ' . $user_currency;
             $booking_number = (int)($data['branch_id'] . mt_rand(10, 99) . Carbon::now()->getTimestamp());
@@ -243,8 +256,6 @@ class BranchController extends ApiController
                     'pay_type' => 'cache'
                 ]);
 
-//                return response()->json(gettype(json_encode($sizeArr)));
-
                 $view = 'emails.BookedUser';
                 $viewData = [
                     'subject' => __("general.emails.BookedUser.subject"),
@@ -252,7 +263,7 @@ class BranchController extends ApiController
                     'email' => $user->email,
                     'order' => $order,
                     'branch' => $branch,
-                    'bookingCount' => $count,
+                    'bookingCount' => count($order->bookings),
                     'sizeArr' => $sizeArr,
                 ];
 
@@ -272,7 +283,7 @@ class BranchController extends ApiController
                     'email' => $branch->email,
                     'order' => $order,
                     'branch' => $branch,
-                    'bookingCount' => $count,
+                    'bookingCount' => count($order->bookings),
                     'sizeArr' => $sizeArr,
                 ];
                 EmailCreator::create(
@@ -283,7 +294,6 @@ class BranchController extends ApiController
                     $view,
                     config('constants.email_type.book_business_owner')
                 );
-//                BookedBusinessOwnerJob::dispatch($branch, $order);
 
             }
             DB::commit();
@@ -325,7 +335,6 @@ class BranchController extends ApiController
 
             $branches = Branch::query()
                 ->select('id', 'name')
-//                ->where('business_id', '=', $businessId)
                 ->where('status', '=', config('constants.branch_status.verified'))
                 ->where('working_status', '=', config('constants.branch_open_status.open'));
 
@@ -347,12 +356,16 @@ class BranchController extends ApiController
 
     public function map(Request $request): JsonResponse
     {
+        $user_currency = General::resolveCurrency($request);
         $date = Carbon::now();
 
         try {
 
             $branches = $this->branchRepository->mapBranchFilter($request->all());
             foreach ($branches as $branch) {
+                $business_currency = $branch->business['currency'] ?? 'EUR';
+                $branchMinPrice = BranchCalculate::minPrice($branch->lockers);
+
                 $weekCount = count($branch->openingTimes->where('weekday', $date->dayOfWeekIso)->where('status', 1));
 
                 if ($weekCount !== 0) {
@@ -362,7 +375,7 @@ class BranchController extends ApiController
                 }
                 $openDayCount = 0;
                 foreach ($branch->openingTimes as $item) {
-                    if ($item->start == '00:00:00' && $item->end == '23:59:00' && $item->status == 1) {
+                    if ($item->start == '00:00:00' && ($item->end == '23:59:00' || $item->end == '24:00:00') && $item->status == 1) {
                         $openDayCount++;
                     }
                 }
@@ -373,7 +386,8 @@ class BranchController extends ApiController
                 } else {
                     $branch['open_day_night'] = 0;
                 }
-                $branch['min_price'] = BranchCalculate::minPrice($branch->lockers);
+
+                $branch['min_price'] = $this->currencyChangeFromUser($branchMinPrice, $business_currency, $user_currency, false) . ' ' . $user_currency;
 
             }
 
@@ -398,7 +412,6 @@ class BranchController extends ApiController
                 ->with('city')
                 ->limit(6)
                 ->get();
-//return response()->json(123123);
             return $this->success(200, ['branches' => $branches]);
 
         } catch (\Throwable $e) {
@@ -449,6 +462,11 @@ class BranchController extends ApiController
 
         try {
             $branch = Branch::with(['media', 'currency', 'socialNetworkUrls', 'business', 'openingTimes'])->where('slug', $slug)->first();
+
+            if(!$branch){
+                return $this->success(200, ['status' => 404],"Branch doesn't exist.");
+            }
+
             $business_currency = $branch->business['currency'] ?? 'EUR';
 
             $lockers = Locker::query()
@@ -483,23 +501,15 @@ class BranchController extends ApiController
 
             $recommendedBranches = BranchCalculate::recommendedBranch($branch);
 
+            $this->minPrice($recommendedBranches, $business_currency, $user_currency);
 
-            if (isset($recommendedBranches)) {
-                foreach ($recommendedBranches as $recommendedBranch) {
-//                $recommendedBranch['recommended_average_rating'] = BranchCalculate::averageRating($recommendedBranch['feedbacks']);
-                    if (isset($recommendedBranch->lockers)) {
-                        $branchMinPrice = BranchCalculate::minPrice($recommendedBranch->lockers);
-
-                        $recommendedBranch['min_price'] = $this->currencyChangeFromUser($branchMinPrice, $business_currency, $user_currency, false) . ' ' . $user_currency;
-                    } else {
-                        $recommendedBranch['min_price'] = '';
-                    }
-
-                    $recommendedBranch['average_rating'] = BranchCalculate::averageRating($recommendedBranch->feedbacks);
-                    $recommendedBranch['average_rating_double'] = round($recommendedBranch['average_rating']);
-
-                    unset($recommendedBranch['feedbacks']);
-                    unset($recommendedBranch['description']);
+            if (count($recommendedBranches) < 3) {
+                $recommendedBranchesIsNotBookable = BranchCalculate::recommendedBranch($branch, 0, 3 - count($recommendedBranches));
+                $this->minPrice($recommendedBranchesIsNotBookable, $business_currency, $user_currency);
+                if (!empty($recommendedBranches) && !empty($recommendedBranchesIsNotBookable)) {
+                    $recommendedBranches = array_merge($recommendedBranches->toArray(), $recommendedBranchesIsNotBookable->toArray());
+                } elseif (!empty($recommendedBranchesIsNotBookable)) {
+                    $recommendedBranches = $recommendedBranchesIsNotBookable;
                 }
             }
 
@@ -516,6 +526,25 @@ class BranchController extends ApiController
         }
     }
 
+    public function minPrice($recommendedBranches, $business_currency, $user_currency) {
+        if (isset($recommendedBranches)) {
+            foreach ($recommendedBranches as $recommendedBranch) {
+                if (isset($recommendedBranch->lockers)) {
+                    $branchMinPrice = BranchCalculate::minPrice($recommendedBranch->lockers);
+
+                    $recommendedBranch['min_price'] = $this->currencyChangeFromUser($branchMinPrice, $business_currency, $user_currency, false) . ' ' . $user_currency;
+                } else {
+                    $recommendedBranch['min_price'] = '';
+                }
+
+                $recommendedBranch['average_rating'] = BranchCalculate::averageRating($recommendedBranch->feedbacks);
+                $recommendedBranch['average_rating_double'] = round($recommendedBranch['average_rating']);
+
+                unset($recommendedBranch['feedbacks']);
+                unset($recommendedBranch['description']);
+            }
+        }
+    }
 
     public function create(Create $request): JsonResponse
     {
@@ -657,10 +686,17 @@ class BranchController extends ApiController
             $branch->branch_number = $branch->id + 10000;
             $branch->is_bookable = $data['is_bookable'];
 
+
+        if($data['phone'] == null){
+            $branch->country_code = '';
+            $data['phone'] = '';
+        }else{
             $branch->country_code = json_decode($branch['country_code']);
             $branch->country_code->country = $data['phone_country'];
             $branch->country_code->code = $data['phone_code'];
             $branch->country_code = json_encode($branch->country_code);
+        }
+
 
             $branch->save();
 
@@ -690,7 +726,6 @@ class BranchController extends ApiController
             /**
              * @var $branch Branch
              */
-
             $this->branchUpdate($branch, $data);
 
             DB::commit();
@@ -698,16 +733,16 @@ class BranchController extends ApiController
         } catch (\Throwable $e) {
             DB::rollback();
             return response()->json(['message' => $e->getMessage(), 'line' => $e->getLine()]);
-            $this->errorLog($request, $e, 'BranchController update action', $user->id);
-            return $this->error(400, "Branch update failed.");
+//            $this->errorLog($request, $e, 'BranchController update action', $user->id);
+//            return $this->error(400, "Branch update failed.");
         }
     }
 
     public function updateMedia(MediaUpdate $request): JsonResponse
     {
+
         $data = $request->validated();
         $user = $request->user();
-
         try {
             DB::beginTransaction();
 
@@ -722,8 +757,7 @@ class BranchController extends ApiController
             /**
              * @var $branch Branch
              */
-
-            $this->branchMediaUpdate($branch, $data);
+           $this->branchMediaUpdate($branch, $data);
 
             DB::commit();
             return $this->success(200, [], "Branch media updated successfully.");

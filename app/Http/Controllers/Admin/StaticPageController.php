@@ -31,7 +31,7 @@ class StaticPageController extends ApiController
         $admin = $request->user();
         try {
             $statics = StaticPages::query();
-            if (isset($data['search']) && $data['search'] != null){
+            if (isset($data['search']) && $data['search'] != null) {
                 $statics = $statics->where('title', 'like', '%' . $data['search'] . '%')
                     ->orWhere('slug', 'like', '%' . $data['search'] . '%');
             }
@@ -52,12 +52,22 @@ class StaticPageController extends ApiController
     public function update(CreateUpdateRequest $request, $slug): JsonResponse
     {
         $data = $request->all();
+//        return response()->json( $data['description']);
 
         try {
             DB::beginTransaction();
             $static = StaticPages::query()->where('slug', $slug)->first();
             $static->title = $data['title'];
-            $static->description = $data['description'];
+
+            $static->description_am =  $data['description_am'];
+            $static->description_ru =  $data['description_ru'];
+            $static->description_en =  $data['description_en'];
+            $static->description_sp =  $data['description_sp'];
+            $static->description_ch =  $data['description_ch'];
+            $static->description_de =  $data['description_de'];
+            $static->description_fr =  $data['description_fr'];
+
+//            $static->description = $data['description'];
             $static->meta_title = $data['meta_title'];
             $static->meta_description = $data['meta_description'];
             $static->meta_keywords = $data['meta_keywords'];

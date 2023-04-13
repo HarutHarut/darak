@@ -25,9 +25,13 @@ class FeedbackRepository {
     public function businessFeedback($user_id, $data): int
     {
         return $this->feedback()
-            ->where('businesses.user_id', $user_id)
-            ->join('orders', 'orders.id', '=', 'feedbacks.order_id')
-            ->join('businesses', 'businesses.id', '=', 'orders.business_id')->count();
+            ->with('branch.business.user')
+            ->whereHas('branch.business.user', function ($q) use($user_id) {
+                $q->where('user_id', $user_id);
+            })->count();
+//            ->where('businesses.user_id', $user_id)
+//            ->join('orders', 'orders.id', '=', 'feedbacks.order_id')
+//            ->join('businesses', 'businesses.id', '=', 'orders.business_id')->count();
     }
 
     /**

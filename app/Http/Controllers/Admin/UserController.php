@@ -34,6 +34,7 @@ class UserController extends ApiController
 
     public function index(Request $request): JsonResponse
     {
+        $data = $request->all();
         $admin = $request->user();
         try {
 
@@ -42,7 +43,18 @@ class UserController extends ApiController
                 ->withCount('bookings')
                 ->whereHas('role', function ($query) {
                     $query->where('name', '<>', 'admin');
-                })->paginate(config('constants.pagination.perPage'));
+                });
+
+            if(isset($data['search']) && $data['search'] !== null){
+                $users = $users->where(function($q) use ($data){
+                  $q->where('name', 'like', '%' . $data['search'] . '%')
+                      ->orWhere('last_name', 'like', '%' . $data['search'] . '%')
+                      ->orWhere('email', 'like', '%' . $data['search'] . '%');
+                });
+            }
+
+            $users = $users->orderByDesc('created_at')
+                ->paginate(config('constants.pagination.perPage'));
 
             return $this->success(200, ['users' => $users]);
         } catch (\Throwable $e) {
@@ -175,13 +187,13 @@ class UserController extends ApiController
         $data = $request->all();
         $user = User::find($data['user_id']);
         if($data['status'] == 1){
-            $user->status = 0;
+            $user->status = 2;
         }else{
             $user->status = 1;
         }
         $user->save();
 
-        if($user->status == 0){
+        if($user->status == 0 || $user->status == 2){
             $viewData = [
                 'subject' => __('general.emails.UserBlocked.subject'),
                 'email' => $user->email,
@@ -198,7 +210,7 @@ class UserController extends ApiController
             );
         }
 
-        if($user->status !== 0){
+        if($user->status == 1){
             $viewData = [
                 'subject' => __('general.emails.UserActivity.subject'),
                 'email' => $user->email,

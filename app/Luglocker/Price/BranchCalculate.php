@@ -7,6 +7,8 @@ use App\Models\Email;
 use App\Models\Feedback;
 use App\Models\Locker;
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 
 class BranchCalculate
 {
@@ -27,7 +29,7 @@ class BranchCalculate
             }
         }
 
-        return (count($lockers)) ? min($min_prices) : '';
+        return (count($lockers) && count($min_prices)) ? min($min_prices) : '';
     }
 
     public static function avgPrice($lockers)
@@ -50,7 +52,7 @@ class BranchCalculate
         return round($feedbacks->avg('rating'), 2);
     }
 
-    public static function recommendedBranch($branch)
+    public static function recommendedBranch($branch, $isBookable = 1, $limit = 3)
     {
         $city_id = $branch->pluck('city_id');
         $address = $branch->pluck('address');
@@ -60,8 +62,15 @@ class BranchCalculate
             ->where('city_id', $branch->city_id)
             ->where('status', 1)
             ->where('id', '!=', $branch->id)
+            ->select('*', DB::raw("6371 * acos(cos(radians(" . $branch->lat . "))
+                * cos(radians(branches.lat))
+                * cos(radians(branches.lng) - radians(" . $branch->lng . "))
+                + sin(radians(" .$branch->lat. "))
+                * sin(radians(branches.lat))) AS distance"))
             ->where('working_status', 1)
-            ->limit(3)
+            ->where('is_bookable', $isBookable)
+            ->oldest('distance')
+            ->limit($limit)
             ->get();
 
         return $recommended;

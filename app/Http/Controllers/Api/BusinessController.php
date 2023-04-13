@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Requests\Admin\Business\BusinessUpdate;
 use App\Models\Booking;
+use App\Services\BusinessService;
 use Illuminate\Http\Request;
 use stdClass;
 use \Throwable;
@@ -117,6 +118,7 @@ class BusinessController extends ApiController
     public function get() {
         $user = Auth::user();
         $business = Business::with('city')->where('user_id', '=', $user['id'])->first();
+        $business['timezoneOptions'] = BusinessService::timezoneOptions();
         return $business;
     }
 
@@ -127,6 +129,7 @@ class BusinessController extends ApiController
 
     public function getBusiness(Request $request, $id){
         $business = Business::find($id);
+        $business['timezoneOptions'] = BusinessService::timezoneOptions();
         return response()->json($business);
     }
 }

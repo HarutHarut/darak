@@ -36,6 +36,9 @@ trait BusinessUpdater
         if (isset($data['address'])){
             $business->address = $data['address'];
         }
+        if (isset($data['timezone'])){
+            $business->timezone = $data['timezone'];
+        }
 
         if (isset($data['status'])){
             $business->status = $data['status'];

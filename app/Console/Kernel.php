@@ -27,12 +27,13 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        $schedule->command('command:email')->everyMinute();
+        $schedule->command('command:email')->cron('* * * * *');
         $schedule->command('command:currency_settings')->hourly();
 //         $schedule->command('send:currency_settings')->everyMinute();
         $schedule->command('command:invoice')->monthlyOn(2);
         $schedule->command('command:change_order_status')->everyMinute();
         $schedule->command('command:transaction')->everyMinute();
+        $schedule->command('sitemap:generate')->daily();
 
     }
 

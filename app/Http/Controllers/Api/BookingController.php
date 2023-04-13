@@ -414,7 +414,7 @@ class BookingController extends ApiController
         $data = $request->all();
         $user = $request->user();
         $new_date = Carbon::now()->subHour(1)->toDateTimeString();
-
+//        return response()->json($new_date);
         try {
             DB::beginTransaction();
 
@@ -433,7 +433,7 @@ class BookingController extends ApiController
                     ]);
                     $data = [
                         'subject' =>  __('general.emails.BookCanceledByBusinessOwner.subject'),
-                        'email' => $user->email,
+                        'email' => $order->user->email,
                         'order' => $order,
                         'user' => $user,
                         'branch' => $order->bookings[0]->branch,
@@ -446,7 +446,8 @@ class BookingController extends ApiController
 
                 }
                 else {
-                    return $this->error(400, "Booking cancel failed.");
+
+                    return $this->error(422, "Booking cancel failed.");
                 }
 
             }
@@ -483,17 +484,43 @@ class BookingController extends ApiController
                     return $this->error(400, __('general.bookingCancelFailedUser'));
                 }
             } elseif ($user->role['name'] == 'admin') {
-                $order->update([
-                    'status' => 'canceled',
-                ]);
+//                if ($order->check_in >= Carbon::now()) {
+
+                    $order->update([
+                        'status' => 'canceled',
+                    ]);
+
+                    $data = [
+                        'subject' =>  __('general.emails.BookCanceledByAdminNotificationToUser.subject'),
+                        'email' => $order->user->email,
+                        'order' => $order,
+                        'user' => $order->user,
+                        'branch' => $order->bookings[0]->branch,
+                        'sizeArr' => $arrSizeCount,
+                        'bookingCount' => count($order->bookings),
+                    ];
+                    $view = 'emails.BookCanceledByAdminNotificationToUser';
+
+                    $this->sendMail($data, $view);
+
+                    $data['email'] = $order->bookings[0]->branch->email;
+                    $data['subject'] = __('general.emails.BookCanceledByAdminNotificationToBranch.subject');
+                    $view = 'emails.BookCanceledByAdminNotificationToBranch';
+
+                    $this->sendMail($data, $view);
+
+//
+//                } else {
+//                    return $this->error(400, __('general.bookingCancelFailedAdmin'));
+//                }
             }
 
 
             DB::commit();
             return $this->success(200, ['order' => $order], "Booking canceled successfully.");
         } catch (\Throwable $e) {
+//            return response()->json($e->getMessage());
             DB::rollback();
-//            dd($e->getMessage());
             $this->errorLog($request, $e, 'Admin/BookingController cancel action', $user->id);
             return $this->error(400, "Booking cancel failed.");
         }

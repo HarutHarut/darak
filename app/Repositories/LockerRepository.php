@@ -13,9 +13,13 @@ class LockerRepository {
     public function businessLockers($user_id): Builder
     {
         return $this->locker()
-            ->where('businesses.user_id', $user_id)
-            ->join('branches', 'branches.id', '=', 'lockers.branch_id')
-            ->join('businesses', 'businesses.id', '=', 'branches.business_id');
+            ->with('branch.business')
+            ->whereHas('branch.business', function ($q) use($user_id) {
+                $q->where('user_id', $user_id);
+            });
+//            ->where('businesses.user_id', $user_id)
+//            ->join('branches', 'branches.id', '=', 'lockers.branch_id')
+//            ->join('businesses', 'businesses.id', '=', 'branches.business_id');
     }
     public function businessLockerCount($business_id): int
     {

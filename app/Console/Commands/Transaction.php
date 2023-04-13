@@ -2,6 +2,7 @@
 
 namespace App\Console\Commands;
 
+use App\Services\OrdersService;
 use Illuminate\Console\Command;
 use App\Http\Controllers\PaymentController;
 
@@ -28,14 +29,19 @@ class Transaction extends Command
      * @var string
      */
     protected $description = 'Command description';
+    /**
+     * @var OrdersService
+     */
+    private $ordersService;
 
     /**
      * Create a new command instance.
      *
-     * @return void
+     * @param OrdersService $ordersService
      */
-    public function __construct()
+    public function __construct(OrdersService $ordersService)
     {
+        $this->ordersService = $ordersService;
         parent::__construct();
     }
 
@@ -47,13 +53,11 @@ class Transaction extends Command
     public function handle()
     {
         $transactions = \App\Models\Transaction::query()->where('status', $this->PAYMENT_STATUSES['pending'])->get();
-        $username = config('services.bank.username');
-        $password = config('services.bank.password');
-        $url = config('services.bank.url');
+
         foreach ($transactions as $transaction){
 
-            $getOrderStatus =  $url . "getOrderStatusExtended.do?userName=$username&password=$password&language=en&orderId=" . $transaction['transaction_id'];
-            $response = json_decode(file_get_contents($getOrderStatus));
+            $response = $this->ordersService->checkTransaction($transaction['transaction_id']);
+
             if ((isset($response->errorCode) && $response->errorCode > 0) || (isset($response->OrderStatus) &&  $response->OrderStatus > 2)) {
                 if(isset($response->OrderStatus)){
                     $transaction->message = "OrderStatus: " .$response->OrderStatus  . " / actionCodeDescription: " . $response->actionCodeDescription;

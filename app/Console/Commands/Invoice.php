@@ -60,12 +60,14 @@ class Invoice extends Command
 
 //        1. select the orders without invoces
         $orders = Order::selectRaw("sum(price) as sum, business_id, currency")   // sum(price) as sum,
-        ->where('invoice_status', '!=', 1)
+            ->where('invoice_status', '!=', 1)
+            ->where('status', 'completed')
             ->where('check_in', '>=', $first_day_last_mount . ' 00:00:00')
             ->where('check_in', '<=', $last_day_last_mount . ' 23:59:59')
             ->groupBy('business_id')
             ->get();
 
+//        dd($orders);
         foreach ($orders as $order) {
             try {
 
@@ -97,6 +99,7 @@ class Invoice extends Command
                     'invoice_number' => $invoice->invoice_number,
                     'first_day_last_mount' => $first_day_last_mount,
                     'due_by' => $due_by,
+                    'daysToAdd' => $daysToAdd,
                     'last_day_last_mount' => $last_day_last_mount
                 ]);
                 $path = 'invoices/' . $today . '/' . $order->business_id;

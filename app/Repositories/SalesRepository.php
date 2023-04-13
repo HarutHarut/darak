@@ -32,14 +32,24 @@ class SalesRepository {
     }
 
     public function adminSalesSum($data) {
-        return $this->sales()->sum('price');
+        return $this->sales()
+            ->where('status', 'completed')
+//            ->sum('price');
+            ->count();
     }
 
-    public function businessSalesSum($user_id,$data) {
+    public function businessSalesSum($user_id, $data)
+    {
         return $this->sales()
-            ->where('businesses.user_id', $user_id)
-            ->join('businesses', 'businesses.id', '=', 'orders.business_id')
-            ->sum('price');
+            ->with('business')
+            ->where('status', 'completed')
+            ->whereHas('business', function ($q) use ($user_id) {
+                $q->where('user_id', $user_id);
+            })
+//            ->join('businesses', 'businesses.id', '=', 'orders.business_id')
+//            ->sum('price');
+            ->count();
+
     }
 
 }

@@ -88,25 +88,9 @@
             </tr>
         </tbody>
     </table>
-    <p style="text-align: center;">{{ __('general.emails.invoice.PaymentMustBe') }}: {{ $due_by }}</p>
-{{--    <table class="total" style="width: 400px; float: right; margin-top: 30px;">--}}
-{{--        <tr>--}}
-{{--            <td style="font-weight: bold;">Total</td>--}}
-{{--            <td>{{ config('app.admin.currency') }} {{ $amount }}</td>--}}
-{{--        </tr>--}}
-{{--        <tr>--}}
-{{--            <td>Amount due(business currency)</td>--}}
-{{--            <td>{{ $order->sum * config('app.admin.commission') / 100 }} {{ $order->currency ?? 'EUR' }}</td>--}}
-{{--        </tr>--}}
-{{--        <tr>--}}
-{{--            <td>Amount due(commission currency)</td>--}}
-{{--            <td>{{ $amount * config('app.admin.commission') / 100 }} {{ config('app.admin.currency') }}</td>--}}
-{{--        </tr>--}}
-{{--    </table>--}}
     <div style="clear: both"></div>
     <p style="margin-top: 40px; line-height: 1.5;">
-        {{ __('general.emails.invoice.description1') }}?
-        {{ __('general.emails.invoice.description2') }}.
+        {{ __('general.emails.invoice.description1') . '?' . __('general.emails.invoice.description2') . ' ' . $daysToAdd . ' ' . __('general.emails.invoice.description3') }}.
     </p>
 </div>
 </body>

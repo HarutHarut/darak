@@ -86,7 +86,6 @@ trait BranchUpdater
 
     public function branchMediaUpdate(Branch $branch, array $data): Branch
     {
-
         if (isset($data['logo'])) {
             $uniqFilename = $randomString = \Illuminate\Support\Str::random(10) . "_" . Carbon::now()->timestamp;
             if ($branch->logo) {
@@ -111,18 +110,12 @@ trait BranchUpdater
                 Storage::delete(str_replace(env('APP_URL') . '/storage/', '', $deleteMedia->url));
                 $deleteMedia->delete();
             }
-
-//            return response()->json($data['mediaKey']);
-
-
             foreach ($data['media'] as $key => $media) {
-
                 if (!$media){
                     continue;
                 }
 
                 if (gettype($media) === 'array') {
-
                     if (!isset($media['id'])) {
 
                         $newMedia = new Media([
@@ -140,15 +133,20 @@ trait BranchUpdater
 
                     $branch->media()->save($newMedia);
                 }
-                if ($data['mediaKey'][$key] == 1){
-                    $branch['preview'] = $media['url'];
+                if (isset($data['mediaKey']) && $data['mediaKey'][$key] == 1){
+                        if(isset($newMedia)){
+                            $branch['preview'] = $newMedia['url'];
+                        }else{
+                            $branch['preview'] = $media['url'];
+                        }
+
                     $branch->save();
                 }
             }
         } else {
             $deleteMedias = Media::query()
-                ->where('related_id', '=', $branch->id)
-                ->where('related_type', '=', Branch::class)
+                ->where('related_id', $branch->id)
+                ->where('related_type', Branch::class)
                 ->get();
 
             if ($deleteMedias) {
@@ -158,7 +156,6 @@ trait BranchUpdater
                 }
             }
         }
-
         return $branch->fresh();
     }
 }

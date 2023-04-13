@@ -38,7 +38,7 @@ class BranchController extends ApiController
                     });
             }
 
-            $branches = $branches->paginate(config('constants.pagination.perPage'));
+            $branches = $branches->orderByDesc('created_at')->paginate(config('constants.pagination.perPage'));
 
             return $this->success(200, ['branches' => $branches]);
 

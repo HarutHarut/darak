@@ -18,6 +18,10 @@ class SizeController extends ApiController
 {
     use SizeUpdater;
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function all(Request $request): JsonResponse
     {
         $user = $request->user();
@@ -38,6 +42,10 @@ class SizeController extends ApiController
         }
     }
 
+    /**
+     * @param Request $request
+     * @return JsonResponse
+     */
     public function list(Request $request)
     {
         $data = $request->input("business_id");
@@ -45,8 +53,10 @@ class SizeController extends ApiController
         $user = $request->user();
         $business = $user->business;
         if (isset($business["id"])) {
+//            return response()->json(12321312);
             $businessId = $business->id;
         }else {
+//            return response()->json(2222222222);
             $businessId = $data;
         }
         try {
@@ -69,6 +79,10 @@ class SizeController extends ApiController
         }
     }
 
+    /**
+     * @param Create $request
+     * @return JsonResponse
+     */
     public function create(Create $request): JsonResponse
     {
         $data = $request->validated();
@@ -103,6 +117,10 @@ class SizeController extends ApiController
         }
     }
 
+    /**
+     * @param Update $request
+     * @return JsonResponse
+     */
     public function update(Update $request): JsonResponse
     {
         $data = $request->validated();
@@ -132,6 +150,11 @@ class SizeController extends ApiController
         }
     }
 
+    /**
+     * @param Request $request
+     * @param $id
+     * @return JsonResponse
+     */
     public function delete(Request $request, $id): JsonResponse
     {
         $user = $request->user();

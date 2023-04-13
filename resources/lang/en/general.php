@@ -17,19 +17,23 @@ return [
 
     'emails' => [
         'BranchBlocked' => [
-            'subject' => 'The branch has been blocked',
+            'subject' => 'Branch blocked',
             "blocked" => "branch has been blocked",
         ],
         'AddFeedback' => [
+            'subject' => 'Leave feedback',
             'subjectLeave' => 'Mail Subject-Leave feedback',
-            'youBookedAndStored' => 'You booked and stored your luggage in the Crazy Hostel storage',
-            'leaveFeedback' => 'Leave feedback',
-        ],
-        'BusinessVerified' => [
-            'subject' => 'The business has been verified',
-            'businessVerify' => 'business successfully verified',
+            'youBookedAndStored' => 'You booked and stored your luggage in the :branchName storage',
             'leaveFeedback' => 'Leave feedback',
             'timeAndLeaveFeedback' => 'Can you take a few seconds of your time and leave feedback? It will help us to improve the service and make it more comfortable for you',
+        ],
+        'BusinessVerified' => [
+            'subject' => 'Business registration',
+            'businessVerify' => 'has been registered successfully',
+        ],
+        'BusinessUnBlocked' => [
+            'subject' => 'Business Unblocked',
+            'businessUnblocked' => 'has been unblocked',
         ],
         'invoice' => [
             'subject' => "Your Invoice for :date",
@@ -41,33 +45,44 @@ return [
             "weWouldLike" => "We would like to inform you that a new invoice has been issued today",
             "pleaseSeeAttachedFile" => "Please see attached file",
             "description1" => 'Why do we use it',
-            "description2" => "It is a long established fact that a reader will be distracted by the readable content of a page when looking at its layout. The point of using Lorem Ipsum is that it has a more-or-less normal distribution of letters, as opposed to using 'Content here, content here', making it look like readable English. Many desktop publishing packages and web page editors now use Lorem Ipsum as their default model text, and a search for 'lorem ipsum' will uncover many web sites still in their infancy. Various versions have evolved over the years, sometimes by accident, sometimes on purpose (injected humour and the like)"
+            "description2" => "Please note that Service Fee the Partner must pay to LugLockers within",
+            "description3" => " days of submitting the invoice. Payment for the service is made by transferring money to LugLockers bank account through from your business page in the Invoices field."
         ],
         'BookedBusinessOwner' => [
-            'subject' => "BookedBusinessOwner",
+            'subject' => "New booking",
         ],
         'BookedUser' => [
-            'subject' => "The locker has been booked - BookedUser",
+            'subject' => "Booking confirmation",
         ],
         'BusinessBlocked' => [
-            'subject' => 'The business has been blocked',
+            'subject' => 'Business blocked',
             'businessBlocked' => 'business has been blocked',
         ],
         'BranchVerified' => [
-            'subject' => 'The branch is verified',
-            'storageSuccessfully' => 'branch successfully verified',
+            'subject' => 'Branch verification',
+            'storageSuccessfully' => 'branch has been verified successfully',
         ],
         'BookCanceledByBusinessOwner' => [
             'subject' => 'Book has been canceled by Business Owner',
         ],
         'BookCanceledByUser' => [
-            'subject' => 'Book has been canceled by user',
+            'subject' => 'Booking cancelation',
         ],
         'BookCanceledByBranch' => [
             'subject' => 'Book has been canceled by branch',
         ],
+        'BookCanceledByAdminNotificationToUser' => [
+            'subject' => 'Booking cancelation',
+            'subject-booking' => 'Subject-Booking cancelation',
+            'YourBookingHasBeenCanceled' => 'Your booking has been canceled by LugLockers',
+        ],
+        'BookCanceledByAdminNotificationToBranch' => [
+            'subject' => 'Booking cancelation',
+            'subject-booking' => 'Subject-Booking cancelation',
+            'YourBookingHasBeenCanceled' => 'has been canceled by LugLockers',
+        ],
         'ResetPasswordToUser' => [
-            'subject' => "Your new password",
+            'subject' => "New password",
             'passwordHasBeenReset' => 'Your password has been reset to',
         ],
         'ResetPassword' => [
@@ -76,24 +91,24 @@ return [
             'reset' => 'Reset Your Password',
             'hey' => 'Hey',
             'requestedAPasswordReset' => 'This email is to confirm that you requested a password reset',
-            'clickTheLinkBelow' => 'To complete the password reset process, click the link below',
+            'clickTheLinkBelow' => 'To complete the password reset process, click the link below.',
         ],
         'UserBlocked' => [
-            'subject' => 'The user has been blocked',
-            "accountBlocked" => "Your account has been blocked",
+            'subject' => 'Account blocked',
+            "accountBlocked" => "Your account has been blocked.",
         ],
         'UserActivity' => [
-            'subject' => 'The user has been activity',
-            "accountBlocked" => "Your account has been activity",
+            'subject' => 'Account activation',
+            "accountBlocked" => "Your account has been activated.",
         ],
         'UserRegistered' => [
-            'subject' => 'User has been registered successfully',
-            'welcomeTo' => 'Welcome To Luglockers',
-            'description' => 'description'
+            'subject' => 'User registration',
+            'welcomeTo' => 'Welcome To Luglockers.',
+            'description' => 'Please click the registration button in order to finish registration.'
         ],
         'VerifyAccount' => [
-            'subject' => "verify your account",
-            'accountCreated' => 'Your account successfully created',
+            'subject' => "Create account",
+            'accountCreated' => 'Your account has been successfully created.',
             "bookAndStore" => "Now you can book and store your luggage in the city of your choice"
         ],
         'contactForm' => [
@@ -105,9 +120,6 @@ return [
             'email' => 'Email',
             'message' => 'Message',
         ],
-
-
-
         'login' => 'Login',
         'sizes' => 'Sizes',
         'cancelBooking' => 'Cancel booking',
@@ -131,7 +143,7 @@ return [
         "resetPassword" => "Reset password",
         "Registration" => "Registration",
         "bookingNumber" => "Booking number",
-        "bookingSuccessfullyCanceled" => "You booking successfully canceled",
+        "bookingSuccessfullyCanceled" => "Your booking canceled.",
         "bookingCanceledFailed" => "Booking start time out",
         "googleMaps" => "View in Google Maps",
         "dear" => "Dear",
@@ -155,7 +167,7 @@ return [
         "hasBeenCancelled" => " has been cancelled",
         "yourBookingHasBeenCancelledBy" => "Your booking has been cancelled by ",
         "becauseYouWereLate" => ", because you were late",
-        "forQuestions" => "For questions, please contact us",
+        "forQuestions" => "For questions, please contact the LugLockers Team",
         "your" => "Your",
         "tel" => "Tel",
         'Jan' => 'Jan',
@@ -170,11 +182,9 @@ return [
         'Oct' => 'Oct',
         'Nov' => 'Nov',
         'Dec' => 'Dec',
-
     ],
     "endAfterStart" => "The end time must be a date after start time",
     "adminCreateUser" => "User account has been created",
-
     "locker" => [
         "add" => [
             "repeatSize" => 'repeat size, please change size',
@@ -182,11 +192,11 @@ return [
     ],
     "bookingCancelFailedUser" => "booking Cancel Failed User",
     "bookingCancelFailedBusiness" => "booking Cancel Failed Business",
+    "bookingCancelFailedAdmin" => "booking Cancel Failed Admin",
     "updateBlog" => "Blog has been updated successfully",
     "lockerQuantityDoesNoteMatch" => "Quantity does note match",
-    "openingTimeErrorMessage" => "Opening time error",
+    "openingTimeErrorMessage" => "Luggage storage Closed",
     "verifyYourEmail" => "Verify your email",
     "adminMastBeVerified" => "Branch created successfully. Admin must be verified your account",
     "businessUpdatedSuccessfully" => "Business updated successfully",
-
 ];

@@ -25,7 +25,9 @@ class BlogController extends ApiController
     {
         try {
 
-            $blogs = Blog::query()->paginate(config('constants.pagination.perPage'));
+            $blogs = Blog::query()
+                ->orderBy('created_at', 'desc')
+                ->paginate(config('constants.pagination.perPage'));
 
             return $this->success(200, ['blogs' => $blogs]);
 
@@ -55,7 +57,9 @@ class BlogController extends ApiController
     {
         try {
 
-            $blogs = Blog::query()->limit(4)->get();
+            $blogs = Blog::query()
+                ->orderBy('created_at', 'desc')
+                ->limit(4)->get();
 
             return $this->success(200, ['blogs' => $blogs]);
 

@@ -36,6 +36,7 @@ class Create extends FormRequest
 
             'address' => ['required', 'string', 'max:255'],
             'logo' => ['required', 'file', 'max:5000'],
+//            'logo' => ['required', 'file', 'max:5000', 'mimes:jpeg,png,jpg'],
             'media' => ['array'],
             'mediaKey' => ['array'],
             'status' => ['required', 'integer'],

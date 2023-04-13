@@ -50,6 +50,16 @@
         {{ __('general.emails.Registration') }}
     </a>
 
+{{--    @if($isBusiness)--}}
+{{--        <a href="{{ config('app.url') . 'emailVerify?hash=' . $url }}" class="cancel-booking-btn">--}}
+{{--            {{ __('general.emails.Registration') }}--}}
+{{--        </a>--}}
+{{--    @else--}}
+{{--        <a href="{{ config('app.url') . 'emailVerify?hash=' . $url }}" class="cancel-booking-btn">--}}
+{{--            {{ __('general.emails.Registration') }}--}}
+{{--        </a>--}}
+{{--    @endif--}}
+
 
     <p>{{ __('general.emails.forQuestions') }}.</p>
     <p>{{ __('general.emails.email') }} -

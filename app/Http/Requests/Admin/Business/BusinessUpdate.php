@@ -24,7 +24,6 @@ class BusinessUpdate extends FormRequest
      */
     public function rules()
     {
-//        dd($this->route('update'));
         return [
             'id' => ['required'],
             'name' => ['required', 'string', 'max:255'],
@@ -35,7 +34,7 @@ class BusinessUpdate extends FormRequest
             'phone' => ['string'],
             'phone_country' => ['required', 'string'],
             'phone_code' => ['required', 'string'],
-            'timezone' => ['timezone']
+            'timezone' => ['required', 'string']
         ];
     }
 }

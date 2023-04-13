@@ -12,10 +12,16 @@ class StaticPages extends Model
     protected $fillable = [
         'title',
         'slug',
-        'description',
         'meta_keywords',
         'meta_description',
         'meta_title',
+        'description_am',
+        'description_ru',
+        'description_en',
+        'description_sp',
+        'description_ch',
+        'description_de',
+        'description_fr',
     ];
 
     protected $casts = [

@@ -63,6 +63,8 @@ Route::prefix('cities')->group(function () {
     Route::get('/', [CityController::class, 'index'])->name('cities.all');
     Route::get('/top', [CityController::class, 'topCities'])->name('cities.top');
     Route::get('/{id}', [CityController::class, 'show'])->name('cities.show');
+    Route::get('city/{slug}', [CityController::class, 'getCity'])->name('cities.getCity');
+    Route::get('/show/all', [CityController::class, 'getCities'])->name('cities.getCities');
 });
 Route::get('/city-logo', [CityController::class, 'logo'])->name('cities.logo');
 
@@ -95,6 +97,7 @@ Route::middleware(['auth:api'])->group(function () {
     Route::get('/pay/{invoice_id}', [PaymentController::class, 'pay'])->name('pay');
 //    Route::get('/payment-callback', [PaymentController::class, 'paymentCallback'])->name('payment.callback');
     Route::post('/cancel-order', [BookingController::class, 'cancelOrder'])->name('cancel.order');
+//    Route::post('/cancel-order-admin', [BookingController::class, 'cancelOrderByAdmin'])->name('cancel.order');
     Route::get('/cancel-booking', [AuthController::class, 'cancelBooking'])->name('email.cancel-booking');
 
 
@@ -103,7 +106,7 @@ Route::middleware(['auth:api'])->group(function () {
     });
 
     Route::prefix('orders')->group(function () {
-        Route::post('/order', [OrderController::class, 'getOrders'])->name('get.orders');
+        Route::get('/order', [OrderController::class, 'getOrders'])->name('get.orders');
         Route::post('/single/{book_number}', [OrderController::class, 'orderSingle'])->name('orders.single');
         Route::get('/search', [OrderController::class, 'search'])->name('orders.search');
     });
@@ -165,6 +168,8 @@ Route::middleware(['auth:api'])->group(function () {
                 Route::put('update', [LockerController::class, 'update'])->name('locker.update');
                 Route::post('/updateGraph', [LockerController::class, 'updateGraph'])->name('update.graph');
                 Route::post('/close-with-date-range', [LockerController::class, 'closeDaysWithDateRange'])->name('update.graph');
+                Route::post('/remove-locker', [LockerController::class, 'removeLocker'])->name('size.remove-locker');
+
             });
             // End Integrated routes
 

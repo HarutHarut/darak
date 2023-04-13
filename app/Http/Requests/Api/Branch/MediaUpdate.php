@@ -25,7 +25,7 @@ class MediaUpdate extends FormRequest
     {
         return [
             'id' => ['required', 'exists:branches,id'],
-            'media' => ['nullable','array'],
+            'media' => ['nullable'],
             'mediaKey' => ['array'],
 
             'logo' => ['nullable', 'file', 'max:5000'],

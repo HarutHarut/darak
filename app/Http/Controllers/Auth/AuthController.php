@@ -6,6 +6,7 @@ use App\Http\Requests\ResetPasswordRequest;
 use App\Http\Requests\SetNewPasswordRequest;
 use App\Luglocker\Email\EmailCreator;
 use App\Models\Order;
+use App\Services\BusinessService;
 use DateTimeZone;
 use GuzzleHttp\Client;
 use GuzzleHttp\Exception\GuzzleException;
@@ -33,16 +34,26 @@ use App\Http\Requests\Api\Auth\Register;
 class AuthController extends ApiController
 {
     protected $proxy;
+    /**
+     * @var BusinessService
+     */
+    private $businessService;
 
-    public function __construct(ProxyRequest $proxy)
+    /**
+     * AuthController constructor.
+     * @param ProxyRequest $proxy
+     * @param BusinessService $businessService
+     */
+    public function __construct(ProxyRequest $proxy,
+                                BusinessService $businessService)
     {
         $this->proxy = $proxy;
+        $this->businessService = $businessService;
     }
 
     public function register(Register $request)
     {
         $data = $request->validated();
-
         try {
             DB::beginTransaction();
 
@@ -54,7 +65,11 @@ class AuthController extends ApiController
                 'role_id' => isset($data['business_name']) ? 3 : 2,
                 'password' => Hash::make($data['password']),
             ]);
+            $user['decodePass'] = $data['password'];
+
             if (isset($data['business_name'])) {
+//                $timezone = $this->businessService->timezoneUTC($data['timezone']);
+
                 $name = new stdClass();
                 $name->ru = null;
                 $name->sp = null;
@@ -279,11 +294,11 @@ class AuthController extends ApiController
     }
 
     public function emailVerify(Request $request){
-
         $data = Crypt::decrypt($request->post('hash'));
         try {
 
             $user = User::query()->find($data['user_id']);
+            $password = $data['decodePass'];
             $user->email_verified_at = date('Y-m-d h:i:s');
             $user->status = config('constants.user_status.verified');
             $user->save();
@@ -291,6 +306,7 @@ class AuthController extends ApiController
             $viewData = [
                 'subject' => __('general.emails.VerifyAccount.subject'),
                 'email' => $user->email,
+                'user' => $user,
             ];
 
             EmailCreator::create(
@@ -302,8 +318,22 @@ class AuthController extends ApiController
                 config('constants.email_type.account_verify')
             );
 
+            $isBusiness = false;
+            if($user->isBusiness()){
+                $isBusiness = true;
+
+                $business = Business::query()->where("user_id", $user->id)->first();
+
+                $business->status = 1;
+                $business->save();
+
+            }
+
             return $this->success(201, [
-                'user' => $user
+                'user' => $user,
+                'email' => $user->email,
+                'password' =>  base64_encode($password),
+                'isBusiness' => $isBusiness,
             ], 'Your account has been verified.');
 
         } catch (\Throwable $e) {
@@ -538,6 +568,7 @@ class AuthController extends ApiController
     public function getResetPasswordHash($user){
         return Crypt::encrypt([
             'user_id' => $user->id,
+            'decodePass' => $user['decodePass'],
             'expires' => Carbon::now()->addHours(config('auth.password_reset_expire'))->timestamp
         ]);
     }

@@ -26,14 +26,21 @@ class BusinessController extends ApiController
         $data = $request->all();
         try {
             $businesses = QueryBuilder::for(Business::class)
+                ->with('user')
                 ->withCount('branches','sizes')
                 ->allowedFilters(['status', 'publish']);
             if(isset($data['search']) && $data['search'] !== null){
-                $businesses = $businesses->where('name', 'like', '%' . $data['search'] . '%')
-                    ->orWhere('address', 'like', '%' . $data['search'] . '%');
+                $businesses = $businesses->where(function ($query) use ($data) {
+                    $query->where('name', 'like', '%' . $data['search'] . '%')
+                        ->orWhere('address', 'like', '%' . $data['search'] . '%')
+                        ->orWhereHas('user', function ($q) use ($data) {
+                            $q->where('name', 'like', '%' . $data['search'] . '%');
+                        });
+                });
+
             }
 
-            $businesses = $businesses->paginate(config('constants.pagination.perPage'));
+            $businesses = $businesses->orderByDesc('created_at')->paginate(config('constants.pagination.perPage'));
             return $this->success(200, [
                 'businesses' => $businesses,
                 'business_status' => config('constants.business_status'),
@@ -87,13 +94,20 @@ class BusinessController extends ApiController
     public function changeStatus(ChangeStatus $request, int $id): JsonResponse
     {
         $data = $request->validated();
+//        return response()->json($data);
         $admin = $request->user();
         $status = 0;
+        $blocked = '';
 
         try {
             DB::beginTransaction();
 
             $business = Business::query()->find($id);
+
+            if($business->status == 2){
+                $blocked = 'unblocked';
+            }
+
             $business->status = $data['status'];
 //            $business = $this->businessUpdate($business, $data);
             $business->save();
@@ -125,7 +139,7 @@ class BusinessController extends ApiController
 
             }
 
-            if ($business->status == config('constants.business_status.verified')) {
+            if ($business->status == config('constants.business_status.verified') && $blocked !== 'unblocked') {
                 foreach ($business->branches as $item){
                     $item->working_status = 1;
                     $item->save();
@@ -147,6 +161,27 @@ class BusinessController extends ApiController
                     config('constants.email_type.business_verify')
                 );
 
+            }elseif($business->status == config('constants.business_status.verified') && $blocked == 'unblocked'){
+                foreach ($business->branches as $item){
+                    $item->working_status = 1;
+                    $item->save();
+                }
+                $status = 1;
+                $viewData = [
+                    'subject' =>  __('general.emails.BusinessUnBlocked.subject'),
+                    'email' => $businessOwner->email,
+                    'user' => $businessOwner,
+                    'business' => $business
+                ];
+
+                EmailCreator::create(
+                    $businessOwner->id,
+                    $businessOwner->email,
+                    $viewData['subject'],
+                    view('emails.BusinessUnBlocked', $viewData)->render(),
+                    'emails.BusinessUnBlocked',
+                    config('constants.email_type.business_verify')
+                );
             }
 
 

@@ -5,10 +5,11 @@ namespace App\Http\Controllers;
 use App\Models\Invoices;
 use App\Models\Order;
 use App\Models\Transaction;
+use App\Services\OrdersService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 
-class PaymentController extends Controller
+class PaymentController extends ApiController
 {
     public $PAYMENT_STATUSES = [
         'default' => 0,
@@ -17,6 +18,19 @@ class PaymentController extends Controller
         'error' => 3,
         'decline' => 4,
     ];
+    /**
+     * @var OrdersService
+     */
+    private $ordersService;
+
+    /**
+     * PaymentController constructor.
+     * @param OrdersService $ordersService
+     */
+    public function __construct(OrdersService $ordersService)
+    {
+        $this->ordersService = $ordersService;
+    }
 
 
     public function pay($invoice_id)
@@ -71,8 +85,8 @@ class PaymentController extends Controller
 
     public function paymentCallback()
     {
-        $order_id = $_GET['orderId'];
-        if (isset($order_id)) {
+        if (isset($_GET['paymentID'])) {
+            $order_id = $_GET['paymentID'];
             $transaction = Transaction::where('transaction_id', $order_id)->orderBy("id", "DESC")->first();
             if (!$transaction) {
                 $message = 'transaction is not found';
@@ -114,17 +128,11 @@ class PaymentController extends Controller
         }
     }
 
-    function checkTransaction($order_id)
+    public function checkTransaction($order_id)
     {
         $transaction = Transaction::where('transaction_id', $order_id)->first();
-        $username = config('services.bank.username');
-        $password = config('services.bank.password'); // urlencode()
-        $url = config('services.bank.url');
-//        $curl = curl_init();
-        $getOrderStatus = $url . "getOrderStatusExtended.do?userName=$username&password=$password&language=en&orderId=" . $order_id;
-        $response = json_decode(file_get_contents($getOrderStatus));
 
-        return $response;
+        return $this->ordersService->checkTransaction($transaction['transaction_id']);
     }
     public function newPay(Request $request, $invoice_id) {
         $invoice = Invoices::find($invoice_id);

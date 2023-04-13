@@ -24,11 +24,11 @@ class CreateUpdateRequest extends FormRequest
     public function rules()
     {
         return [
-            'description.en' => ['required','string'],
-            'description.ru' => ['string'],
-            'description.ch' => ['string'],
-            'description.am' => ['string'],
-            'description.fr' => ['string'],
+            'description_en' => ['required','string'],
+            'description_ru' => ['string'],
+            'description_ch' => ['string'],
+            'description_am' => ['string'],
+            'description_fr' => ['string'],
 
             'title.en' => ['required','string'],
             'title.ru' => ['string'],

@@ -33,6 +33,8 @@ class Update extends FormRequest
             'branch_id' => ['required', 'exists:branches,id'],
             'size_id' => ['required', 'exists:sizes,id'],
             'count' => ['required','numeric'],
+            'price_per_day' => ['numeric', 'nullable'],
+            'price_per_hour' => ['numeric', 'nullable'],
 //            "prices" => ['required','array', new CheckPriceRange()],
         ];
         if(isset($data['price_per_hour']) || isset($data['price_per_day'])){
